@@ -72,7 +72,7 @@ module Craigslist
         auto_parts: 'pta',
         baby_kids: 'baa',
         beauty_hlth: 'haa',
-        cars_trucks: 'i/autos',
+        cars_trucks: 'cta',
         cds_dvd_vhs: 'ema',
         cell_phones: 'moa',
         clothes_acc: 'cla',

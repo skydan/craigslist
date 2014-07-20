@@ -47,16 +47,17 @@ module Craigslist
 
       for i in 0..(([max_results - 1, -1].max) / 100)
         uri = Craigslist::Net::build_uri(@city, @category_path, options, i * 100) if i > 0
-        doc = Nokogiri::HTML(open(uri))
+        doc = Nokogiri::HTML(open(uri, @proxy ? { proxy_http_basic_authentication: @proxy } : {}))
 
         doc.css('p.row').each do |node|
           result = {}
 
+          result['id'] = node['data-pid']
           title = node.at_css('.pl a')
           result['text'] = title.text.strip
           result['href'] = title['href']
 
-          info = node.at_css('.l2 .pnr')
+          info = node.at_css('.l2')
 
           if price = info.at_css('.price')
             result['price'] = price.text.strip
@@ -64,15 +65,22 @@ module Craigslist
             result['price'] = nil
           end
 
-          if location = info.at_css('small')
+          if location = info.at_css('.pnr small')
             # Remove brackets
             result['location'] = location.text.strip[1..-2].strip
           else
             result['location'] = nil
           end
 
-          attributes = info.at_css('.px').text
-          result['has_img'] = attributes.include?('img') || attributes.include?('pic')
+          if seller = info.at_css('.gc')
+            result['seller'] = seller.text[/(dealer|owner)/].to_sym
+          else
+            result['seller'] = nil
+          end
+
+          attributes = info.at_css('.pnr .px')
+          result['has_img'] = attributes.text.include?('img') || attributes.text.include?('pic')
+          result['has_map'] = attributes.text.include?('map')
 
           results << result
           break if results.length == max_results
@@ -165,6 +173,15 @@ module Craigslist
       raise ArgumentError, 'max_ask must be at least 0' unless
         max_ask.nil? || max_ask >= 0
       @max_ask = max_ask
+      self
+    end
+
+    # @param proxy [Array]
+    # @return [Craigslist::Persistable]
+    def proxy=(proxy)
+      raise ArgumentError, 'proxy must be an array' unless
+        proxy.nil? || proxy.is_a?(Array)
+      @proxy = proxy
       self
     end
 
@@ -267,6 +284,17 @@ module Craigslist
         @max_ask
       else
         self.max_ask = max_ask
+        self
+      end
+    end
+
+    # @param proxy [Array]
+    # @return [Craigslist::Persistable, Array]
+    def proxy(proxy=nil)
+      if proxy.nil?
+        @proxy
+      else
+        self.proxy = proxy
         self
       end
     end
