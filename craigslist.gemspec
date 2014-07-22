@@ -25,5 +25,4 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rake', '~> 10.1.0'
   s.add_development_dependency 'rspec', '~> 2.14.1'
-  s.add_development_dependency 'nokogiri', '~> 1.6.0'
 end
