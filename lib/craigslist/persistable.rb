@@ -47,7 +47,10 @@ module Craigslist
 
       for i in 0..(([max_results - 1, -1].max) / 100)
         uri = Craigslist::Net::build_uri(@city, @category_path, options, i * 100) if i > 0
-        doc = Nokogiri::HTML(open(uri, @proxy ? { proxy_http_basic_authentication: @proxy } : {}))
+        open_uri_options = {}
+        open_uri_options.merge!(proxy_http_basic_authentication: @proxy) if @proxy
+        open_uri_options.merge!('User-Agent' => @user_agent) if @user_agent
+        doc = Nokogiri::HTML(open(uri, open_uri_options))
 
         doc.css('p.row').each do |node|
           result = {}
@@ -185,6 +188,15 @@ module Craigslist
       self
     end
 
+    # @param agent [String]
+    # @return [Craigslist::Persistable]
+    def user_agent=(agent)
+      raise ArgumentError, 'user-agent must be a string' unless
+          agent.nil? || agent.is_a?(String)
+      @user_agent = agent
+      self
+    end
+
     ##
     # Methods compatible with writing from block with instance_eval also serve
     # as simple reader methods. `Object` serves as the toggle between reader and
@@ -295,6 +307,17 @@ module Craigslist
         @proxy
       else
         self.proxy = proxy
+        self
+      end
+    end
+
+    # @param agent [Array]
+    # @return [Craigslist::Persistable, Array]
+    def user_agent(agent=nil)
+      if agent.nil?
+        @user_agent
+      else
+        self.user_agent = agent
         self
       end
     end
