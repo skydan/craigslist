@@ -88,6 +88,7 @@ module Craigslist
           results << result
           break if results.length == max_results
         end
+        sleep 5 if i > 0
       end
 
       results
